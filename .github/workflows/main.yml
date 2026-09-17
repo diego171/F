@@ -15,11 +15,25 @@ jobs:
       - name: Descargar repositorio
         uses: actions/checkout@v4
 
-      - name: Preparar proyecto
+      - name: Extraer proyecto
         run: |
           unzip -o 1.zip -d proyecto
-          cp -r proyecto/* .
-          cp -r proyecto/.[!.]* . 2>/dev/null || true
+          echo "Contenido extraído:"
+          find proyecto -maxdepth 3 -type f | sort
+
+      - name: Localizar proyecto Android
+        run: |
+          if [ -f "proyecto/settings.gradle" ]; then
+            cp -r proyecto/. .
+          else
+            ROOT=$(dirname "$(find proyecto -name settings.gradle -type f | head -1)")
+            echo "Proyecto encontrado en: $ROOT"
+            cp -r "$ROOT"/. .
+          fi
+          echo "Contenido final:"
+          ls -la
+          echo "Buscando settings.gradle:"
+          find . -maxdepth 2 -name "settings.gradle" -o -name "settings.gradle.kts"
 
       - name: Configurar Java
         uses: actions/setup-java@v4
@@ -41,10 +55,14 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
 
       - name: Compilar APK
-        run: gradle :app:assembleDebug --stacktrace
+        run: |
+          echo "Contenido antes de compilar:"
+          ls -la
+          gradle :app:assembleDebug --stacktrace
 
       - name: Guardar APK
         uses: actions/upload-artifact@v4
         with:
           name: Reporte-de-Unidad-APK
           path: app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
