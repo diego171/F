@@ -1,0 +1,47 @@
+name: Compilar APK
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+      - master
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Descargar repositorio
+        uses: actions/checkout@v4
+
+      - name: Preparar proyecto
+        run: |
+          unzip -o 1.zip -d proyecto
+          cp -r proyecto/* .
+          cp -r proyecto/.[!.]* . 2>/dev/null || true
+
+      - name: Configurar Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Configurar Android
+        uses: android-actions/setup-android@v3
+
+      - name: Instalar SDK Android
+        run: |
+          sdkmanager "platforms;android-35" "build-tools;35.0.0"
+
+      - name: Configurar Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Compilar APK
+        run: gradle :app:assembleDebug --stacktrace
+
+      - name: Guardar APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: Reporte-de-Unidad-APK
+          path: app/build/outputs/apk/debug/app-debug.apk
