@@ -1,68 +1,31 @@
-name: Compilar APK
+plugins {
+    id 'com.android.application'
+}
 
-on:
-  workflow_dispatch:
-  push:
-    branches:
-      - main
-      - master
+android {
+    namespace 'com.reporteunidad.app'
+    compileSdk 35
 
-jobs:
-  build:
-    runs-on: ubuntu-latest
+    defaultConfig {
+        applicationId 'com.reporteunidad.app'
+        minSdk 23
+        targetSdk 35
+        versionCode 1
+        versionName '1.0'
+    }
+}
 
-    steps:
-      - name: Descargar repositorio
-        uses: actions/checkout@v4
+configurations.all {
+    resolutionStrategy {
+        force 'org.jetbrains.kotlin:kotlin-stdlib:1.8.22'
+        force 'org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.8.22'
+        force 'org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.8.22'
+    }
+}
 
-      - name: Extraer proyecto
-        run: |
-          unzip -o 1.zip -d proyecto
-          echo "Contenido extraído:"
-          find proyecto -maxdepth 3 -type f | sort
+dependencies {
+    implementation 'androidx.appcompat:appcompat:1.7.0'
+    implementation 'androidx.webkit:webkit:1.12.1'
 
-      - name: Localizar proyecto Android
-        run: |
-          if [ -f "proyecto/settings.gradle" ]; then
-            cp -r proyecto/. .
-          else
-            ROOT=$(dirname "$(find proyecto -name settings.gradle -type f | head -1)")
-            echo "Proyecto encontrado en: $ROOT"
-            cp -r "$ROOT"/. .
-          fi
-          echo "Contenido final:"
-          ls -la
-          echo "Buscando settings.gradle:"
-          find . -maxdepth 2 -name "settings.gradle" -o -name "settings.gradle.kts"
-
-      - name: Configurar Java
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: '17'
-
-      - name: Configurar Android SDK
-        uses: android-actions/setup-android@v4
-        with:
-          packages: ''
-
-      - name: Instalar SDK Android
-        run: |
-          yes | sdkmanager --licenses >/dev/null || true
-          sdkmanager "platform-tools" "platforms;android-35" "build-tools;35.0.0"
-
-      - name: Configurar Gradle
-        uses: gradle/actions/setup-gradle@v4
-
-      - name: Compilar APK
-        run: |
-          echo "Contenido antes de compilar:"
-          ls -la
-          gradle :app:assembleDebug --stacktrace
-
-      - name: Guardar APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: Reporte-de-Unidad-APK
-          path: app/build/outputs/apk/debug/app-debug.apk
-          if-no-files-found: error
+    implementation 'org.jetbrains.kotlin:kotlin-stdlib:1.8.22'
+}
